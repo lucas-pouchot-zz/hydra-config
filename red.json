@@ -1,0 +1,158 @@
+{
+    "name" : "red",
+    "version" : "0.1.0",
+    "images" : [ 
+        {
+            "name" : "container_red",
+            "servers" : [ 
+                {
+                    "url" : "192.168.45.80:5000",
+                    "token" : "eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiSHlkcmFjb2RlcHdkMSEifQ=="
+                }
+            ],
+            "config" : {
+                "Image" : "digitalairways/thethingbox:red",
+                "ExposedPorts" : {
+                    "80/tcp" : {},
+                    "1880/tcp" : {}
+                },
+                "Volumes" : {
+                    "/var/run/dbus" : {},
+                    "/root/thethingbox/node_modules/node-red/public/log" : {},
+                    "/dev/bus/usb" : {}
+                }
+            },
+            "host_config" : {
+                "Binds" : [ 
+                    "/var/run/dbus:/var/run/dbus", 
+                    "/root/log:/root/thethingbox/node_modules/node-red/public/log", 
+                    "/dev/bus/usb:/dev/bus/usb"
+                ],
+                "PortBindings" : {
+                    "80/tcp" : [ 
+                        {
+                            "HostPort" : "80"
+                        }
+                    ],
+                    "1880/tcp" : [ 
+                        {
+                            "HostPort" : "1880"
+                        }
+                    ]
+                },
+                "Privileged" : true,
+                "CapAdd" : [ 
+                    "SYS_RAWIO"
+                ],
+                "Devices" : [ 
+                    {
+                        "PathOnHost" : "/dev/mem",
+                        "PathInContainer" : "/dev/mem",
+                        "CgroupPermissions" : "mrw"
+                    }
+                ],
+                "NetworkMode" : "host",
+                "RestartPolicy" : {
+                    "Name" : "always"
+                }
+            }
+        }, 
+        {
+            "name" : "container_mosquitto",
+            "servers" : [ 
+                {
+                    "url" : "192.168.45.80:5000",
+                    "token" : "eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiSHlkcmFjb2RlcHdkMSEifQ=="
+                }
+            ],
+            "config" : {
+                "Image" : "pascaldevink/rpi-mosquitto:1.0",
+                "ExposedPorts" : {
+                    "1883/tcp" : {},
+                    "9001/tcp" : {}
+                }
+            },
+            "host_config" : {
+                "PortBindings" : {
+                    "1883/tcp" : [ 
+                        {
+                            "HostPort" : "1883"
+                        }
+                    ],
+                    "9001/tcp" : [ 
+                        {
+                            "HostPort" : "9001"
+                        }
+                    ]
+                },
+                "RestartPolicy" : {
+                    "Name" : "always"
+                }
+            }
+        }, 
+        {
+            "name" : "hydra_manager",
+            "servers" : [ 
+                {
+                    "url" : "192.168.45.80:5000",
+                    "token" : "eyAidXNlcm5hbWUiOiAiYWRtaW4iLCAicGFzc3dvcmQiOiAiSHlkcmFjb2RlcHdkMSEifQ=="
+                }
+            ],
+            "config" : {
+                "Image" : "digitalairways/hydra:v0.33",
+                "Entrypoint" : "/start.sh",
+                "Env" : [ 
+                    "LD_LIBRARY_PATH=/usr/local/lib/:/target/dependencies/rpi-rgb-led-matrix/lib:/target/dependencies/jsoncpp/lib:/target/dependencies/mosquitto/lib:/target/dependencies/SpiderMonkey/lib"
+                ],
+                "User" : "root:root",
+                "WorkingDir" : "/",
+                "ExposedPorts" : {
+                    "1880/tcp" : {}
+                },
+                "Volumes" : {
+                    "/home/nodered/config" : {},
+                    "/dev/bus/usb" : {}
+                }
+            },
+            "host_config" : {
+                "Binds" : [ 
+                    "/root/hydra_manager:/home/nodered/config", 
+                    "/dev/bus/usb:/dev/bus/usb"
+                ],
+                "Links" : [ 
+                    "container_mosquitto:localMQTT"
+                ],
+                "CapAdd" : [ 
+                    "SYS_RAWIO"
+                ],
+                "Devices" : [ 
+                    {
+                        "PathOnHost" : "/dev/mem",
+                        "PathInContainer" : "/dev/mem",
+                        "CgroupPermissions" : "mrw"
+                    }
+                ],
+                "PortBindings" : {
+                    "1880/tcp" : [ 
+                        {
+                            "HostPort" : "1885"
+                        }
+                    ]
+                },
+                "RestartPolicy" : {
+                    "Name" : "always"
+                },
+                "Privileged" : true
+            }
+        }
+    ],
+    "brokers" : [ 
+        {
+            "ip" : "192.168.45.81",
+            "port" : "1883"
+        }
+    ],
+    "config_servers" : [ 
+        "192.168.45.81:1890/config/byNFC"
+    ]
+}
